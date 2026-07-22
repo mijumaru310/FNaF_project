@@ -47,7 +47,7 @@ class BaseEnemy(pygame.sprite.Sprite):
             1: [0,3, 4],    # ダイニングからは左通路(3)か右通路(4)へ
             2: [0,4,4],       # 物置からは右通路(4)へ合流してくる
             3: [1,5,5],       # 左通路からは左扉前(5)へ
-            4: [random.choice([1,2]),6,6],       # 右通路からは右扉前(6)へ  #エラーでるかも
+            4: [1,6,6],       # 右通路からは右扉前(6)へ
             5: [3,5,5],       # 左扉前からは戻る(3)のみ
             6: [4,6,6]        # 右扉前からは戻る(4)のみ
         }
@@ -120,7 +120,11 @@ class BaseEnemy(pygame.sprite.Sprite):
             # アクションに応じてグラフのリストから次の部屋を選ぶ
             # 正解ラベルy (0: 待機, 1: ルート1(主に後退), 2: ルート2(前進), 3: ルート3(前進))
             if action == 1 and len(possible) > 0:
-                self.position_id = possible[0] 
+                # 右通路(4)から後退する場合、ランダムにダイニング(1)か物置(2)へ
+                if self.position_id == 4:
+                    self.position_id = random.choice([1, 2])
+                else:
+                    self.position_id = possible[0] 
             elif action == 2 and len(possible) > 1:
                 self.position_id = possible[1]
             elif action == 3 and len(possible) > 1:

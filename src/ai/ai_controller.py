@@ -1,4 +1,3 @@
-from tensorflow import keras
 import numpy as np
 import joblib 
 
@@ -15,7 +14,7 @@ class AIController:
         x = np.array([[power, float(left_door), float(right_door), float(position_id), float(camera_id)]])
         #predictions = self.model.predict(x)
         #action = np.argmax(predictions)
-        action=self.model.predict(x)
+        action=self.model.predict(x)[0]
         print(f"action:{action}")
         
         possible_moves = room_graph.get(position_id, [])

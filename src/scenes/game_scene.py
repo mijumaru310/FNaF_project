@@ -32,6 +32,8 @@ class GameScene(BaseScene):
         self.ai = AIController(model_path=ai_path)
         self.SE_door=pygame.mixer.Sound("assets/sounds/door.mp3")
         self.SE_hora=pygame.mixer.Sound("assets/sounds/hora-.mp3")
+        self.hora_played_left = False
+        self.hora_played_right = False
 
         self.cam_buttons = {
             0: pygame.Rect(620, 250, 100, 40), # 奥の部屋
@@ -148,24 +150,31 @@ class GameScene(BaseScene):
            
 
             # ★追加：マウスクリックによるカメラ切り替え処理
-            if event.type == MOUSEBUTTONDOWN and event.button == 1: # 左クリック
-                if self.player.camera_active:
-                    # 定義したすべてのボタンの当たり判定(collidepoint)をチェック
-                    for cam_id, rect in self.cam_buttons.items():
-                        if rect.collidepoint(event.pos):
-                            self.player.current_camera_id = cam_id
-                else:
-                    # ★追加：警備室にいる時は丸いライトボタンを操作できる
-                    if self.light_buttons["left"].collidepoint(event.pos):
-                        self.player.left_light_active = not self.player.left_light_active
-                    if self.light_buttons["right"].collidepoint(event.pos):
-                        self.player.right_light_active = not self.player.right_light_active
+            if self.player.camera_active:
+                # 定義したすべてのボタンの当たり判定(collidepoint)をチェック
+                for cam_id, rect in self.cam_buttons.items():
+                    if rect.collidepoint(event.pos):
+                        self.player.current_camera_id = cam_id
+            else:
+                # ★追加：警備室にいる時は丸いライトボタンを操作できる
+                if self.light_buttons["left"].collidepoint(event.pos):
+                    self.player.left_light_active = not self.player.left_light_active
+                if self.light_buttons["right"].collidepoint(event.pos):
+                    self.player.right_light_active = not self.player.right_light_active
 
     def update(self, dt):
         """状態の更新"""
         self.player.update(dt)
         # Group内の全スプライトのupdate()が一括で呼ばれる [1]
         self.all_sprites.update(dt)
+
+        # ホラー効果音フラグのリセット（敵が扉前から離れたらリセット）
+        left_enemy_at_door = any(e.position_id == 5 for e in self.enemies)
+        right_enemy_at_door = any(e.position_id == 6 for e in self.enemies)
+        if not left_enemy_at_door or not self.player.left_light_active:
+            self.hora_played_left = False
+        if not right_enemy_at_door or not self.player.right_light_active:
+            self.hora_played_right = False
         
         # ★追加：時間の経過処理
         self.time_timer += dt
@@ -320,9 +329,7 @@ class GameScene(BaseScene):
                 screen.blit(self.bg_image, (0, 0))
             else:
                 # 画像がない場合は今まで通りのグレー背景
-                screen.fill((30, 30, 30)) 
-            
-            self.all_sprites.draw(screen)
+                screen.fill((30, 30, 30))
 
             if self.player.left_door_closed:
                 # 左側に灰色の壁（扉）を描画
@@ -354,7 +361,9 @@ class GameScene(BaseScene):
                         if not self.player.left_door_closed:
                             scaled_img = pygame.transform.scale(enemy.image, (200, 200))
                             screen.blit(scaled_img, (25, 350))
-                            self.SE_hora.play()
+                            if not self.hora_played_left:
+                                self.SE_hora.play()
+                                self.hora_played_left = True
                         
                 if self.player.right_light_active:
                     if enemy.position_id == 4: # 部屋4（右の通路：遠く）
@@ -365,7 +374,9 @@ class GameScene(BaseScene):
                         if not self.player.right_door_closed:
                             scaled_img = pygame.transform.scale(enemy.image, (200, 200))
                             screen.blit(scaled_img, (550, 350))
-                            self.SE_hora.play()
+                            if not self.hora_played_right:
+                                self.SE_hora.play()
+                                self.hora_played_right = True
             # Group内の全スプライトが一括で描画される [1]
             self.all_sprites.draw(screen)
 
