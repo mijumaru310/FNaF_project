@@ -8,6 +8,8 @@ from src.entities.enemy import StandardEnemy, FastEnemy # 敵クラスをイン�
 from src.scenes.gameover_scene import GameOverScene
 from src.scenes.gameclear_scene import GameClearScene
 from src.ai.ai_controller import AIController
+from src.ai.player_tracker import PlayerTracker
+from src.ai.adaptive_ai import AdaptiveAI
 from src.entities.button import Button
 class GameScene(BaseScene):
     def __init__(self, manager,level_id="night_1"):
@@ -19,7 +21,7 @@ class GameScene(BaseScene):
         speed_mult = self.stage_data.get("enemy_speed_multiplier", 1.0)
         power_mult = self.stage_data.get("power_decrease_multiplier", 1.0)
         self.enemynum = self.stage_data.get("enemy_num",1)
-        ai_path = self.stage_data.get("ai_model_path", "models/nn_model_night_1.keras")
+        ai_path = self.stage_data.get("ai_model_path", "models/rf_model_night_5.pkl")
             
         # JSONのデータを渡して初期化
         self.player = Player(decrease_rate=2.0 * power_mult)
@@ -30,10 +32,13 @@ class GameScene(BaseScene):
         self.btn_camera = Button(325, 500, 150, 50, "Camera", self.font)
         self.btn_closecamera = Button(275, 500, 250, 50, "Close Camera", self.font)
         self.ai = AIController(model_path=ai_path)
+        self.adaptive_ai = AdaptiveAI()  # ★適応型AI
+        self.player_tracker = PlayerTracker()  # ★プレイヤー行動記録
         self.SE_door=pygame.mixer.Sound("assets/sounds/door.mp3")
         self.SE_hora=pygame.mixer.Sound("assets/sounds/hora-.mp3")
         self.hora_played_left = False
         self.hora_played_right = False
+        self.font_small = pygame.font.SysFont(None, 28)  # AI戦略表示用の小さいフォント
 
         self.cam_buttons = {
             0: pygame.Rect(620, 250, 100, 40), # 奥の部屋
@@ -87,12 +92,12 @@ class GameScene(BaseScene):
         # 敵を生成してグループに追加
         if self.enemynum ==1:
             self.enemies = [
-            StandardEnemy(self.player,ai_controller=self.ai),
+            StandardEnemy(self.player,ai_controller=self.ai, adaptive_ai=self.adaptive_ai),
             ]
         elif self.enemynum ==2:
             self.enemies = [
-                StandardEnemy(self.player,ai_controller=self.ai),
-                FastEnemy(self.player,ai_controller=self.ai)
+                StandardEnemy(self.player,ai_controller=self.ai, adaptive_ai=self.adaptive_ai),
+                FastEnemy(self.player,ai_controller=self.ai, adaptive_ai=self.adaptive_ai)
             ]
         for enemy in self.enemies:
             enemy.move_interval *= speed_mult
@@ -168,6 +173,11 @@ class GameScene(BaseScene):
         # Group内の全スプライトのupdate()が一括で呼ばれる [1]
         self.all_sprites.update(dt)
 
+        # ★適応型AI: プレイヤー行動の記録と戦略の更新
+        self.player_tracker.record(self.player, self.game_hour, dt)
+        features = self.player_tracker.get_features()
+        self.adaptive_ai.update(features, dt)
+
         # ホラー効果音フラグのリセット（敵が扉前から離れたらリセット）
         left_enemy_at_door = any(e.position_id == 5 for e in self.enemies)
         right_enemy_at_door = any(e.position_id == 6 for e in self.enemies)
@@ -185,6 +195,7 @@ class GameScene(BaseScene):
         # ★追加：朝6時(6 AM)になったらクリア画面へ遷移
         if self.game_hour >= 6:
             pygame.mixer.music.stop()
+            self.player_tracker.save_log("data/player_logs.csv")  # ★ログ保存
             self.manager.change_scene(GameClearScene(self.manager))
             return # シーン遷移するので以降の処理（ゲームオーバー判定など）はストップ
            
@@ -193,11 +204,13 @@ class GameScene(BaseScene):
         for enemy in self.enemies:
             if enemy.is_attacking:
                 pygame.mixer.music.stop()
+                self.player_tracker.save_log("data/player_logs.csv")  # ★ログ保存
                 self.manager.change_scene(GameOverScene(self.manager))
             
         # 電力が0になった場合もゲームオーバー
         if self.player.power <= 0:
             pygame.mixer.music.stop()
+            self.player_tracker.save_log("data/player_logs.csv")  # ★ログ保存
             self.manager.change_scene(GameOverScene(self.manager))
 
     def draw(self, screen):
@@ -414,6 +427,18 @@ class GameScene(BaseScene):
             screen.blit(door_text, (20, 70))
             screen.blit(camera_text, (20, 120))
             screen.blit(light_text, (20, 170)) 
+
+            # ★適応型AI: 現在の攻撃戦略をUI表示（デモ用）
+            strategy_name = self.adaptive_ai.get_strategy_name()
+            strategy_colors = {
+                "ATTACK_LEFT": (255, 100, 100),   # 赤
+                "ATTACK_RIGHT": (100, 100, 255),  # 青
+                "AGGRESSIVE": (255, 165, 0),      # オレンジ
+                "CAUTIOUS": (100, 255, 100)        # 緑
+            }
+            s_color = strategy_colors.get(strategy_name, (200, 200, 200))
+            ai_text = self.font_small.render(f"AI Strategy: {strategy_name}", True, s_color)
+            screen.blit(ai_text, (20, 210))
 
             
         
