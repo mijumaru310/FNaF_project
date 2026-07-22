@@ -87,7 +87,9 @@ class GameScene(BaseScene):
         
         # 複数のSpriteをまとめて管理するための入れ物(Group) [1]
         self.all_sprites = pygame.sprite.Group()
+        self.enemy_sprites = pygame.sprite.Group() # ★追加：敵専用グループ
         self.all_spritesinCamara = pygame.sprite.Group()
+        self.debug_mode = False # ★追加：デバッグモードのフラグ
         
         # 敵を生成してグループに追加
         if self.enemynum ==1:
@@ -103,7 +105,7 @@ class GameScene(BaseScene):
             enemy.move_interval *= speed_mult
         #self.enemy = Enemy(self.player, interval=self.stage_data["enemy_move_interval"], ai_controller=self.ai)
         for enemy in self.enemies:
-            self.all_sprites.add(enemy)
+            self.enemy_sprites.add(enemy)
         #self.all_sprites.add(self.enemies, self.enemies[1])
         self.all_sprites.add(self.btn_left, self.btn_right, self.btn_camera)
         self.all_spritesinCamara.add(self.btn_closecamera)
@@ -115,7 +117,14 @@ class GameScene(BaseScene):
     def process_event(self, event):
         """キーボードの入力イベントを処理"""
         if event.type == KEYDOWN:
-            if event.key == K_a:
+            if event.key == K_ESCAPE:
+                pygame.quit()
+                exit()
+            # ★追加：F3キーでデバッグモードを切り替え
+            elif event.key == K_f3:
+                self.debug_mode = not self.debug_mode
+                print(f"★ Debug Mode: {'ON' if self.debug_mode else 'OFF'}")
+            elif event.key == K_a:
                 self.player.left_door_closed = not self.player.left_door_closed
                 self.SE_door.play()
             elif event.key == K_d:
@@ -172,6 +181,7 @@ class GameScene(BaseScene):
         self.player.update(dt)
         # Group内の全スプライトのupdate()が一括で呼ばれる [1]
         self.all_sprites.update(dt)
+        self.enemy_sprites.update(dt) # ★追加：敵の更新
 
         # ★適応型AI: プレイヤー行動の記録と戦略の更新
         self.player_tracker.record(self.player, self.game_hour, dt)
@@ -392,6 +402,10 @@ class GameScene(BaseScene):
                                 self.hora_played_right = True
             # Group内の全スプライトが一括で描画される [1]
             self.all_sprites.draw(screen)
+
+            # ★変更：デバッグモード時のみ、敵の本来の位置にスプライトを描画する
+            if self.debug_mode:
+                self.enemy_sprites.draw(screen)
 
         
 
