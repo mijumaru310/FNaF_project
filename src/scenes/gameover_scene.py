@@ -23,6 +23,7 @@ class GameOverScene(BaseScene):
         # 演出中はキーボード入力を受け付けないようにするか、ESCで終了させる
         if event.type == KEYDOWN and event.key == K_ESCAPE:
             self.cap.release()
+            pygame.mixer.music.stop()
             pygame.quit()
             sys.exit()
 
@@ -57,6 +58,7 @@ class GameOverScene(BaseScene):
             else:
                 # 動画が最後まで再生された（ret == False）らゲーム終了
                 self.cap.release()
+                pygame.mixer.music.stop()
                 from src.scenes.title_scene import TitleScene
                 self.manager.change_scene(TitleScene(self.manager))
         else:

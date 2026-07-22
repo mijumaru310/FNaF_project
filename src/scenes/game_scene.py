@@ -113,7 +113,7 @@ class GameScene(BaseScene):
         self.game_hour = 0
         self.time_timer = 0.0
         # 1プレイ3分にするため、現実の30秒でゲーム内の1時間が進むように設定
-        self.sec_per_hour = 4.0 
+        self.sec_per_hour = 10.0 
     def process_event(self, event):
         """キーボードの入力イベントを処理"""
         if event.type == KEYDOWN:
@@ -121,7 +121,7 @@ class GameScene(BaseScene):
                 pygame.quit()
                 exit()
             # ★追加：F3キーでデバッグモードを切り替え
-            elif event.key == K_f3:
+            elif event.key == K_F3:
                 self.debug_mode = not self.debug_mode
                 print(f"★ Debug Mode: {'ON' if self.debug_mode else 'OFF'}")
             elif event.key == K_a:
