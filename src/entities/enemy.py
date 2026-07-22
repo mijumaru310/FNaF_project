@@ -24,6 +24,22 @@ class BaseEnemy(pygame.sprite.Sprite):
         self.move_interval = interval 
         self.ai_controller = ai_controller
         self.is_attacking = False 
+
+        try:
+            self.move_sound1 = pygame.mixer.Sound("assets/sounds/foot1.wav")
+        except FileNotFoundError:
+            print("足音の音声が見つかりません。")
+            self.move_sound1 = None
+        try:
+            self.move_sound2 = pygame.mixer.Sound("assets/sounds/foot2.wav")
+        except FileNotFoundError:
+            print("足音の音声が見つかりません。")
+            self.move_sound2 = None
+        try:
+            self.move_sound3 = pygame.mixer.Sound("assets/sounds/foot3.wav")
+        except FileNotFoundError:
+            print("足音の音声が見つかりません。")
+            self.move_sound3 = None
         
         # ユーザーが設定したルーム番号とつながりをそのまま使用
         self.room_graph = {
@@ -59,27 +75,33 @@ class BaseEnemy(pygame.sprite.Sprite):
             self.move()
 
     def move(self):
+        old_position = self.position_id
+
         if self.position_id == 5: 
             if self.player.left_door_closed:
                 print(f"{self.name}を左扉で防衛成功！")
-                self.on_defended() # 敵の性格によって逃げ方が変わる
+                self.on_defended()
             else:
                 print(f"{self.name}に左から侵入されました！")
                 self.is_attacking = True 
-            self.update_rect_position()
-            return
             
         elif self.position_id == 6: 
             if self.player.right_door_closed:
                 print(f"{self.name}を右扉で防衛成功！")
-                self.on_defended() # 敵の性格によって逃げ方が変わる
+                self.on_defended() 
             else:
                 print(f"{self.name}に右から侵入されました！")
                 self.is_attacking = True
-            self.update_rect_position()
-            return
 
-        self.decide_next_room()
+        else:
+            # 扉の前以外にいる場合はAIで次の部屋を決める
+            self.decide_next_room()
+
+        # ★追加: もし部屋を移動していたら（position_idが変わっていたら）足音を鳴らす
+        if old_position != self.position_id:
+            self.play_move_sound()
+
+        self.update_rect_position()
 
     def on_defended(self):
         """防衛された時の処理（ユーザーが作成したロジック）"""
@@ -105,6 +127,36 @@ class BaseEnemy(pygame.sprite.Sprite):
                 self.position_id = possible[2]
                 
         self.update_rect_position()
+    
+     # ★追加：位置に応じて左右の音量を変えて音を鳴らすメソッド
+    def play_move_sound(self):
+        if not (self.move_sound1 or self.move_sound2 or self.move_sound3):
+            return
+
+        # 部屋ごとの (左スピーカーの音量, 右スピーカーの音量) の設定
+        # 遠い部屋は音が小さく、扉前は片方から最大音量で聞こえるようにする
+        volume_settings = {
+            0: (0.2, 0.2), # 奥の部屋（遠い・中央）
+            1: (0.4, 0.4), # ダイニング（少し遠い・中央）
+            2: (0.1, 0.4), # 物置（少し遠い・右寄り）
+            3: (0.8, 0.1), # 左通路（近い・左）
+            4: (0.1, 0.8), # 右通路（近い・右）
+            5: (1.0, 0.0), # 左扉前（直前・完全に左）
+            6: (0.0, 1.0)  # 右扉前（直前・完全に右）
+        }
+
+        left_vol, right_vol = volume_settings.get(self.position_id, (0.5, 0.5))
+        
+        # 空いている音声チャンネルを探して、左右の音量を個別に設定して再生
+        channel = pygame.mixer.find_channel(True)
+        if channel:
+            channel.set_volume(left_vol, right_vol)
+            if self.position_id== 0 or self.position_id== 1 or self.position_id== 2 :
+                channel.play(self.move_sound1)
+            elif self.position_id== 3 or self.position_id== 5:
+                channel.play(self.move_sound2)
+            elif self.position_id== 4 or self.position_id== 6:
+                channel.play(self.move_sound3)
 
 
 # ==========================================

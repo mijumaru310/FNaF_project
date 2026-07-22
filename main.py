@@ -1,20 +1,23 @@
 import sys
 import pygame
 from pygame.locals import *
-from src.core.scene_manager import SceneManager
-from src.scenes.game_scene import GameScene  # 追加
+from src.core.scene_manager import SceneManager 
+from src.scenes.title_scene import TitleScene 
 
 SCREEN_SIZE = (800, 600)
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode(SCREEN_SIZE)
-    pygame.display.set_caption("System Breach / AI Anomaly")
+    pygame.display.set_caption("Five Night at Nagoya University")
+    icon_image = pygame.image.load("assets/images/Fredy_attack.png")
+
+    pygame.display.set_icon(icon_image)
 
     clock = pygame.time.Clock()
     
-    # 最初のシーンをGameSceneとして初期化し、マネージャーに渡す
-    initial_scene = GameScene(manager=None) 
+    # 最初のシーンをTitleSceneとして初期化し、マネージャーに渡す
+    initial_scene = TitleScene(manager=None) 
     manager = SceneManager(initial_scene)
     initial_scene.manager = manager # 相互参照
 
