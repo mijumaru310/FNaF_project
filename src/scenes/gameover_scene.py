@@ -57,8 +57,8 @@ class GameOverScene(BaseScene):
             else:
                 # 動画が最後まで再生された（ret == False）らゲーム終了
                 self.cap.release()
-                pygame.quit()
-                sys.exit()
+                from src.scenes.title_scene import TitleScene
+                self.manager.change_scene(TitleScene(self.manager))
         else:
             # 動画が読み込めなかった場合の予備画面（真っ暗）
             # 画面を赤く染めて恐怖演出のベースにする

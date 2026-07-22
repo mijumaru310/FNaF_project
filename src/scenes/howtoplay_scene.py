@@ -18,7 +18,7 @@ class HowToPlayScene(BaseScene):
         # 画面に表示する説明文（英語でFNaFの雰囲気を出しつつわかりやすく）
         self.instructions = [
             "This is Nagoya University at night.",
-            "You play the role of a security guard and monitor the campus."
+            "You play the role of a security guard and monitor the campus.",
             "GOAL: Survive until 6 AM.",
             "Do not let the Monsters enter your room.",
             "",
