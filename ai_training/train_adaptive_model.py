@@ -31,6 +31,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
 import joblib
+import pandas as pd
 
 # ===========================================
 # 1. 合成データの生成
@@ -86,6 +87,63 @@ for i in range(N_SAMPLES):
     # 終盤（4-5 AM）の補正：プレイヤーは電力を温存しがち
     if game_hour >= 4 and total_door < 0.2 and np.random.random() < 0.4:
         y[i] = 2  # AGGRESSIVE
+
+# ===========================================
+# 1.5 実データの読み込みと追加 (CSVがあれば)
+# ===========================================
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.join(script_dir, '..')
+csv_path = os.path.join(project_root, 'data', 'player_logs.csv')
+
+if os.path.exists(csv_path):
+    print(f"\n★ 実際のプレイヤーデータ ({csv_path}) を見つけました。学習に追加します...")
+    try:
+        df = pd.read_csv(csv_path)
+        # CSVの特徴量（7次元）: left_door, right_door, camera, left_light, right_light, power, game_hour
+        # ※実データは 0/1 などの離散値ですが、考え方は同じです
+        
+        # 特徴量の抽出
+        # CSVの列名が一致していることを前提
+        real_X = df[['left_door', 'right_door', 'camera', 'left_light', 'right_light', 'power', 'game_hour']].values
+        real_y = np.zeros(len(real_X), dtype=int)
+        
+        # 実データに対しても同じラベリングルールを適用
+        for i in range(len(real_X)):
+            left_door = real_X[i, 0]
+            right_door = real_X[i, 1]
+            camera = real_X[i, 2]
+            left_light = real_X[i, 3]
+            right_light = real_X[i, 4]
+            power = real_X[i, 5]
+            game_hour = real_X[i, 6]
+            
+            door_diff = left_door - right_door
+            total_door = left_door + right_door
+            light_diff = left_light - right_light
+            bias_score = door_diff * 0.7 + light_diff * 0.3
+            
+            if bias_score > 0.12:
+                real_y[i] = 1
+            elif bias_score < -0.12:
+                real_y[i] = 0
+            elif camera > 0.5 and total_door < 0.3:
+                real_y[i] = 2
+            elif total_door > 0.5 and camera < 0.2:
+                real_y[i] = 2
+            else:
+                real_y[i] = 3
+                
+            if power < 20 and np.random.random() < 0.6:
+                real_y[i] = 2
+            if game_hour >= 4 and total_door < 0.2 and np.random.random() < 0.4:
+                real_y[i] = 2
+                
+        # 合成データと実データを結合
+        X = np.vstack((X, real_X))
+        y = np.concatenate((y, real_y))
+        print(f"  → {len(real_X)} 件の実データを追加しました！")
+    except Exception as e:
+        print(f"  → CSVの読み込みに失敗しました: {e}")
 
 # ===========================================
 # 2. モデルの学習
