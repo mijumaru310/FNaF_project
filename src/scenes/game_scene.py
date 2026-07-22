@@ -6,6 +6,7 @@ from src.core.base_scene import BaseScene
 from src.entities.player import Player
 from src.entities.enemy import StandardEnemy, FastEnemy # 敵クラスをインポート
 from src.scenes.gameover_scene import GameOverScene
+from src.scenes.gameclear_scene import GameClearScene
 from src.ai.ai_controller import AIController
 from src.entities.button import Button
 class GameScene(BaseScene):
@@ -52,7 +53,7 @@ class GameScene(BaseScene):
             self.camera_image.append(pygame.image.load(f"assets/images/camera{i}.png").convert())
             self.camera_image[i] = pygame.transform.scale(self.camera_image[i], (800, 600))
         
-        print(f"カメライメージ{len(self.camera_image)}")
+        #print(f"カメライメージ{len(self.camera_image)}")
         
         #右のドア
         try:
@@ -83,6 +84,11 @@ class GameScene(BaseScene):
         self.all_sprites.add(self.enemies, self.enemies[1])
         self.all_sprites.add(self.btn_left, self.btn_right, self.btn_camera)
         self.all_spritesinCamara.add(self.btn_closecamera)
+         # ★追加：ゲーム内時間の管理 (0 = 12 AM)
+        self.game_hour = 0
+        self.time_timer = 0.0
+        # 1プレイ3分にするため、現実の30秒でゲーム内の1時間が進むように設定
+        self.sec_per_hour = 2.0 
     def process_event(self, event):
         """キーボードの入力イベントを処理"""
         if event.type == KEYDOWN:
@@ -126,12 +132,12 @@ class GameScene(BaseScene):
                     for cam_id, rect in self.cam_buttons.items():
                         if rect.collidepoint(event.pos):
                             self.player.current_camera_id = cam_id
-            else:
-                # ★追加：警備室にいる時は丸いライトボタンを操作できる
-                if self.light_buttons["left"].collidepoint(event.pos):
-                    self.player.left_light_active = not self.player.left_light_active
-                if self.light_buttons["right"].collidepoint(event.pos):
-                    self.player.right_light_active = not self.player.righ
+                else:
+                    # ★追加：警備室にいる時は丸いライトボタンを操作できる
+                    if self.light_buttons["left"].collidepoint(event.pos):
+                        self.player.left_light_active = not self.player.left_light_active
+                    if self.light_buttons["right"].collidepoint(event.pos):
+                        self.player.right_light_active = not self.player.righ
 
     def update(self, dt):
         """状態の更新"""
@@ -139,13 +145,28 @@ class GameScene(BaseScene):
         # Group内の全スプライトのupdate()が一括で呼ばれる [1]
         self.all_sprites.update(dt)
         
+        # ★追加：時間の経過処理
+        self.time_timer += dt
+        if self.time_timer >= self.sec_per_hour:
+            self.time_timer = 0.0
+            self.game_hour += 1
+            
+        # ★追加：朝6時(6 AM)になったらクリア画面へ遷移
+        if self.game_hour >= 6:
+            pygame.mixer.music.stop()
+            self.manager.change_scene(GameClearScene(self.manager))
+            return # シーン遷移するので以降の処理（ゲームオーバー判定など）はストップ
+           
+
         # ★ゲームオーバー判定
         for enemy in self.enemies:
             if enemy.is_attacking:
+                pygame.mixer.music.stop()
                 self.manager.change_scene(GameOverScene(self.manager))
             
         # 電力が0になった場合もゲームオーバー
         if self.player.power <= 0:
+            pygame.mixer.music.stop()
             self.manager.change_scene(GameOverScene(self.manager))
 
     def draw(self, screen):
@@ -342,10 +363,20 @@ class GameScene(BaseScene):
             r_light = "ON" if self.player.right_light_active else "OFF"
             light_text = self.font.render(f"L-Light(Q): {l_light} | R-Light(E): {r_light}", True, (255, 255, 100))
 
-            screen.blit(power_text, (20, 20))
-            screen.blit(door_text, (20, 70))
-            screen.blit(camera_text, (20, 120))
-            screen.blit(light_text, (20, 170)) 
+            display_hour = 12 if self.game_hour == 0 else self.game_hour
+        time_str = f"{display_hour} AM"
+        
+        # 大きめの文字で描画
+        time_text = self.font.render(time_str, True, (255, 255, 255))
+        night_text = self.font.render("Night 1", True, (200, 200, 200))
+        
+        screen.blit(time_text, (700, 20))
+        screen.blit(night_text, (700, 50))
+
+        screen.blit(power_text, (20, 20))
+        screen.blit(door_text, (20, 70))
+        screen.blit(camera_text, (20, 120))
+        screen.blit(light_text, (20, 170)) 
 
             
         
