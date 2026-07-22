@@ -10,21 +10,28 @@ from src.scenes.gameclear_scene import GameClearScene
 from src.ai.ai_controller import AIController
 from src.entities.button import Button
 class GameScene(BaseScene):
-    def __init__(self, manager):
+    def __init__(self, manager,level_id="night_1"):
         self.manager = manager
+        self.level_id = level_id 
         with open('config/stages.json', 'r') as f:
-            # 今回は第1夜(night_1)のデータを読み込む
-            self.stage_data = json.load(f)["night_1"] 
+            # ★修正：固定の "night_1" ではなく、受け取った level_id のデータを読み込む
+            self.stage_data = json.load(f)[level_id]
+        speed_mult = self.stage_data.get("enemy_speed_multiplier", 1.0)
+        power_mult = self.stage_data.get("power_decrease_multiplier", 1.0)
+        self.enemynum = self.stage_data.get("enemy_num",1)
+        ai_path = self.stage_data.get("ai_model_path", "models/nn_model_night_1.keras")
             
         # JSONのデータを渡して初期化
-        self.player = Player(decrease_rate=self.stage_data["power_decrease_rate"]) 
+        self.player = Player(decrease_rate=2.0 * power_mult)
         self.font = pygame.font.SysFont(None, 48)
 
         self.btn_left = Button(50, 450, 150, 50, "L-Door (A)", self.font)
         self.btn_right = Button(600, 450, 150, 50, "R-Door (D)", self.font)
         self.btn_camera = Button(325, 500, 150, 50, "Camera", self.font)
         self.btn_closecamera = Button(275, 500, 250, 50, "Close Camera", self.font)
-        self.ai = AIController('models/nn_model.keras')
+        self.ai = AIController(model_path=ai_path)
+        self.SE_door=pygame.mixer.Sound("assets/sounds/door.mp3")
+        self.SE_hora=pygame.mixer.Sound("assets/sounds/hora-.mp3")
 
         self.cam_buttons = {
             0: pygame.Rect(620, 250, 60, 40), # 奥の部屋
@@ -76,24 +83,37 @@ class GameScene(BaseScene):
         self.all_spritesinCamara = pygame.sprite.Group()
         
         # 敵を生成してグループに追加
-        self.enemies = [
+        if self.enemynum ==1:
+            self.enemies = [
             StandardEnemy(self.player,ai_controller=self.ai),
-            FastEnemy(self.player,ai_controller=self.ai)
-        ]
+            ]
+        elif self.enemynum ==2:
+            self.enemies = [
+                StandardEnemy(self.player,ai_controller=self.ai),
+                FastEnemy(self.player,ai_controller=self.ai)
+            ]
+        for enemy in self.enemies:
+            enemy.move_interval *= speed_mult
         #self.enemy = Enemy(self.player, interval=self.stage_data["enemy_move_interval"], ai_controller=self.ai)
-        self.all_sprites.add(self.enemies, self.enemies[1])
+        for enemy in self.enemies:
+            self.all_sprites.add(enemy)
+        #self.all_sprites.add(self.enemies, self.enemies[1])
         self.all_sprites.add(self.btn_left, self.btn_right, self.btn_camera)
         self.all_spritesinCamara.add(self.btn_closecamera)
          # ★追加：ゲーム内時間の管理 (0 = 12 AM)
         self.game_hour = 0
         self.time_timer = 0.0
         # 1プレイ3分にするため、現実の30秒でゲーム内の1時間が進むように設定
-        self.sec_per_hour = 2.0 
+        self.sec_per_hour = 4.0 
     def process_event(self, event):
         """キーボードの入力イベントを処理"""
         if event.type == KEYDOWN:
-            if event.key == K_a: self.player.left_door_closed = not self.player.left_door_closed
-            elif event.key == K_d: self.player.right_door_closed = not self.player.right_door_closed
+            if event.key == K_a:
+                self.player.left_door_closed = not self.player.left_door_closed
+                self.SE_door.play()
+            elif event.key == K_d:
+                self.player.right_door_closed = not self.player.right_door_closed
+                self.SE_door.play()
             elif event.key == K_SPACE: self.player.camera_active = not self.player.camera_active
             elif event.key == K_q:
                 self.player.left_light_active = not self.player.left_light_active
@@ -117,8 +137,10 @@ class GameScene(BaseScene):
             #カメラを開いているときは反応しないように
             if self.btn_left.is_clicked(event.pos) and not self.player.camera_active:
                 self.player.left_door_closed = not self.player.left_door_closed
+                self.SE_door.play()
             elif self.btn_right.is_clicked(event.pos) and not self.player.camera_active:
                 self.player.right_door_closed = not self.player.right_door_closed
+                self.SE_door.play()
             elif self.btn_camera.is_clicked(event.pos) and not self.player.camera_active:
                 self.player.camera_active = not self.player.camera_active
             elif self.btn_closecamera.is_clicked(event.pos) and  self.player.camera_active: #カメラ閉じるボタン
@@ -137,7 +159,7 @@ class GameScene(BaseScene):
                     if self.light_buttons["left"].collidepoint(event.pos):
                         self.player.left_light_active = not self.player.left_light_active
                     if self.light_buttons["right"].collidepoint(event.pos):
-                        self.player.right_light_active = not self.player.righ
+                        self.player.right_light_active = not self.player.right_light_active
 
     def update(self, dt):
         """状態の更新"""
@@ -332,6 +354,7 @@ class GameScene(BaseScene):
                         if not self.player.left_door_closed:
                             scaled_img = pygame.transform.scale(enemy.image, (200, 200))
                             screen.blit(scaled_img, (25, 350))
+                            self.SE_hora.play()
                         
                 if self.player.right_light_active:
                     if enemy.position_id == 4: # 部屋4（右の通路：遠く）
@@ -342,6 +365,7 @@ class GameScene(BaseScene):
                         if not self.player.right_door_closed:
                             scaled_img = pygame.transform.scale(enemy.image, (200, 200))
                             screen.blit(scaled_img, (550, 350))
+                            self.SE_hora.play()
             # Group内の全スプライトが一括で描画される [1]
             self.all_sprites.draw(screen)
 
@@ -364,19 +388,21 @@ class GameScene(BaseScene):
             light_text = self.font.render(f"L-Light(Q): {l_light} | R-Light(E): {r_light}", True, (255, 255, 100))
 
             display_hour = 12 if self.game_hour == 0 else self.game_hour
-        time_str = f"{display_hour} AM"
+            time_str = f"{display_hour} AM"
         
-        # 大きめの文字で描画
-        time_text = self.font.render(time_str, True, (255, 255, 255))
-        night_text = self.font.render("Night 1", True, (200, 200, 200))
-        
-        screen.blit(time_text, (700, 20))
-        screen.blit(night_text, (700, 50))
+            # 大きめの文字で描画
+            time_text = self.font.render(time_str, True, (255, 255, 255))
+            display_night = self.level_id.replace("night_", "Night ")
+            night_text = self.font.render(display_night, True, (200, 200, 200))
 
-        screen.blit(power_text, (20, 20))
-        screen.blit(door_text, (20, 70))
-        screen.blit(camera_text, (20, 120))
-        screen.blit(light_text, (20, 170)) 
+        
+            screen.blit(time_text, (700, 20))
+            screen.blit(night_text, (675, 50))
+
+            screen.blit(power_text, (20, 20))
+            screen.blit(door_text, (20, 70))
+            screen.blit(camera_text, (20, 120))
+            screen.blit(light_text, (20, 170)) 
 
             
         

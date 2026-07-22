@@ -2,7 +2,7 @@ import sys
 import pygame
 from pygame.locals import *
 from src.core.base_scene import BaseScene
-from src.scenes.game_scene import GameScene
+from src.scenes.levelselect_scene import LevelSelectScene
 
 class TitleScene(BaseScene):
     def __init__(self, manager):
@@ -34,7 +34,7 @@ class TitleScene(BaseScene):
             if self.play_button.collidepoint(event.pos):
                 # PLAYボタンが押されたらゲーム本編(GameScene)へシーンを切り替える
                 pygame.mixer.music.stop()
-                self.manager.change_scene(GameScene(self.manager))
+                self.manager.change_scene(LevelSelectScene(self.manager))
             elif self.quit_button.collidepoint(event.pos):
                 # QUITボタンが押されたらゲームを終了する
                 pygame.mixer.music.stop()

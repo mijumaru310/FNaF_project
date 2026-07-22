@@ -22,9 +22,9 @@ class GameClearScene(BaseScene):
     def update(self, dt):
         self.timer += dt
         # 5秒後に終了する（将来的にタイトル画面に戻るように変更可能です）
-        if self.timer > 15.0:
-            pygame.quit()
-            sys.exit()
+        if self.timer > 10.0:
+            from src.scenes.levelselect_scene import LevelSelectScene
+            self.manager.change_scene(LevelSelectScene(self.manager))
 
     def draw(self, screen):
         screen.fill((0, 0, 0)) # 背景は真っ黒
@@ -40,7 +40,7 @@ class GameClearScene(BaseScene):
         screen.blit(text_surface, text_rect)
         
         # 2秒経過したら「You Survived!」の文字を表示
-        if self.timer > 2.0:
+        if self.timer > 4.0:
             cheer_surface = self.font_small.render("You Survived!", True, (200, 200, 200))
             cheer_rect = cheer_surface.get_rect(center=(400, 400))
             screen.blit(cheer_surface, cheer_rect)
