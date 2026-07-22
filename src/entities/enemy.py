@@ -3,7 +3,7 @@ import random
 
 class BaseEnemy(pygame.sprite.Sprite):
     """すべての敵の親となる基本クラス"""
-    def __init__(self, player, name, image_path, interval, ai_controller=None):
+    def __init__(self, player, name, image_path, interval, ai_controller=None, adaptive_ai=None):
         super().__init__()
         try:
             raw_image = pygame.image.load(image_path).convert_alpha()
@@ -23,6 +23,7 @@ class BaseEnemy(pygame.sprite.Sprite):
         self.move_timer = 0.0
         self.move_interval = interval 
         self.ai_controller = ai_controller
+        self.adaptive_ai = adaptive_ai
         self.is_attacking = False 
 
         try:
@@ -117,6 +118,10 @@ class BaseEnemy(pygame.sprite.Sprite):
             )
             possible = self.room_graph.get(self.position_id, [])
             
+            # ★適応型AI: プレイヤーの行動パターンに基づいてアクションにバイアスを適用
+            if self.adaptive_ai:
+                action = self.adaptive_ai.apply_bias(action, self.position_id, self.room_graph)
+            
             # アクションに応じてグラフのリストから次の部屋を選ぶ
             # 正解ラベルy (0: 待機, 1: ルート1(主に後退), 2: ルート2(前進), 3: ルート3(前進))
             if action == 1 and len(possible) > 0:
@@ -169,13 +174,13 @@ class BaseEnemy(pygame.sprite.Sprite):
 
 class StandardEnemy(BaseEnemy):
     """【特徴】赤い。防衛されるとユーザー指定の randlist の部屋に逃げる。"""
-    def __init__(self, player, ai_controller):
-        super().__init__(player, name="Red(Standard)", image_path="assets/images/Fredy_stand.png", interval=3.0, ai_controller=ai_controller)
+    def __init__(self, player, ai_controller, adaptive_ai=None):
+        super().__init__(player, name="Red(Standard)", image_path="assets/images/Fredy_stand.png", interval=3.0, ai_controller=ai_controller, adaptive_ai=adaptive_ai)
 
 class FastEnemy(BaseEnemy):
     """【特徴】青い。移動が速いが、防衛されると必ず初期位置に逃げる。"""
-    def __init__(self, player, ai_controller):
-        super().__init__(player, name="Blue(Fast)",  image_path="assets/images/Fredy_stand.png", interval=2.0, ai_controller=ai_controller)
+    def __init__(self, player, ai_controller, adaptive_ai=None):
+        super().__init__(player, name="Blue(Fast)",  image_path="assets/images/Fredy_stand.png", interval=2.0, ai_controller=ai_controller, adaptive_ai=adaptive_ai)
     
     def on_defended(self):
         """親クラスの処理をオーバーライド（ポリモーフィズム）"""

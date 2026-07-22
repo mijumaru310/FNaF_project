@@ -29,10 +29,10 @@ class Player:
         usage = 0
         if self.left_door_closed: usage += 1
         if self.right_door_closed: usage += 1
-        if self.camera_active: usage += 1
+        if self.camera_active: usage += 0.5
 
-        if self.left_light_active: usage += 1
-        if self.right_light_active: usage += 1
+        if self.left_light_active: usage += 0.25
+        if self.right_light_active: usage += 0.25
         # 施設の使用数に応じて電力を消費 (dtを使ってPC性能による差をなくす)
         if usage > 0:
             # 例: 1つ使用につき、1秒間で{self.decrease_rate}%消費

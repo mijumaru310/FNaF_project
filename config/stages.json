@@ -1,31 +1,31 @@
 {
     "night_1": {
         "enemy_speed_multiplier": 2.0,
-        "power_decrease_multiplier": 1.0,
+        "power_decrease_multiplier": 0.2,
         "ai_model_path": "models/rf_model_night_1.pkl",
         "enemy_num":1
     },
     "night_2": {
         "enemy_speed_multiplier": 1.6,
-        "power_decrease_multiplier": 1.2,
+        "power_decrease_multiplier": 0.4,
         "ai_model_path": "models/rf_model_night_2.pkl",
         "enemy_num":1
     },
     "night_3": {
         "enemy_speed_multiplier": 1.2,
-        "power_decrease_multiplier": 1.5,
+        "power_decrease_multiplier": 0.75,
         "ai_model_path": "models/rf_model_night_3.pkl",
         "enemy_num":2
     },
     "night_4": {
         "enemy_speed_multiplier": 0.9,
-        "power_decrease_multiplier": 1.8,
+        "power_decrease_multiplier": 0.8,
         "ai_model_path":"models/rf_model_night_4.pkl",
         "enemy_num":2
     },
     "night_5": {
         "enemy_speed_multiplier": 0.7,
-        "power_decrease_multiplier": 2.2,
+        "power_decrease_multiplier": 1.0,
         "ai_model_path": "models/rf_model_night_5.pkl",
         "enemy_num":2
     }
