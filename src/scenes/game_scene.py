@@ -25,8 +25,8 @@ class GameScene(BaseScene):
         self.player = Player(decrease_rate=2.0 * power_mult)
         self.font = pygame.font.SysFont(None, 48)
 
-        self.btn_left = Button(50, 450, 150, 50, "L-Door (A)", self.font)
-        self.btn_right = Button(600, 450, 150, 50, "R-Door (D)", self.font)
+        self.btn_left = Button(0, 450, 200, 50, "L-Door (A)", self.font)
+        self.btn_right = Button(600, 450, 200, 50, "R-Door (D)", self.font)
         self.btn_camera = Button(325, 500, 150, 50, "Camera", self.font)
         self.btn_closecamera = Button(275, 500, 250, 50, "Close Camera", self.font)
         self.ai = AIController(model_path=ai_path)
@@ -34,13 +34,13 @@ class GameScene(BaseScene):
         self.SE_hora=pygame.mixer.Sound("assets/sounds/hora-.mp3")
 
         self.cam_buttons = {
-            0: pygame.Rect(620, 250, 60, 40), # 奥の部屋
-            1: pygame.Rect(560, 320, 60, 40), # ダイニング
-            2: pygame.Rect(680, 320, 60, 40), # 物置
-            3: pygame.Rect(560, 390, 60, 40), # 左通路
-            4: pygame.Rect(680, 390, 60, 40), # 右通路
-            5: pygame.Rect(560, 460, 60, 40), # 左扉前
-            6: pygame.Rect(680, 460, 60, 40)  # 右扉前
+            0: pygame.Rect(620, 250, 100, 40), # 奥の部屋
+            1: pygame.Rect(560, 320, 100, 40), # ダイニング
+            2: pygame.Rect(680, 320, 100, 40), # 物置
+            3: pygame.Rect(560, 390, 100, 40), # 左通路
+            4: pygame.Rect(680, 390, 100, 40), # 右通路
+            5: pygame.Rect(560, 460, 100, 40), # 左扉前
+            6: pygame.Rect(680, 460, 100, 40)  # 右扉前
         }
 
         self.light_buttons = {
@@ -215,14 +215,14 @@ class GameScene(BaseScene):
 
             # 1. 部屋名の表示
             room_names = {
-                0: "CAM 0: Back Room (奥の部屋)", 1: "CAM 1: Dining (ダイニング)", 
-                2: "CAM 2: Storage (物置)",       3: "CAM 3: Left Hall (左通路)", 
-                4: "CAM 4: Right Hall (右通路)",  5: "CAM 5: Left Door (左扉前)", 
-                6: "CAM 6: Right Door (右扉前)"
+                0: "CAM 0: Back Room ", 1: "CAM 1: Dining ", 
+                2: "CAM 2: Storage ",       3: "CAM 3: Left Hall ", 
+                4: "CAM 4: Right Hall ",  5: "CAM 5: Left Door ", 
+                6: "CAM 6: Right Door "
             }
             room_text = self.font.render(room_names.get(cam_id, "Unknown"), True, (255, 255, 255))
             
-            screen.blit(room_text, (20, 20))
+            screen.blit(room_text, (350, 20))
 
             # 2. カメラ映像内に敵を描画（見ている部屋にいる敵だけ）
             enemy_drawn_count = 0
@@ -292,7 +292,7 @@ class GameScene(BaseScene):
                 pygame.draw.line(screen, (200, 200, 200), start_pos, end_pos, 2)
             
             # 2. プレイヤーの現在地（YOU）を描画して線を繋ぐ
-            pygame.draw.rect(screen, (150, 150, 150), (620, 530, 60, 30))
+            pygame.draw.rect(screen, (150, 150, 150), (620, 530, 100, 30))
             you_text = self.font.render("YOU", True, (0, 0, 0))
             you_rect = you_text.get_rect(center=(650, 545))
             screen.blit(you_text, you_rect)

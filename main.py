@@ -9,7 +9,10 @@ SCREEN_SIZE = (800, 600)
 def main():
     pygame.init()
     screen = pygame.display.set_mode(SCREEN_SIZE)
-    pygame.display.set_caption("System Breach / AI Anomaly")
+    pygame.display.set_caption("Five Night at Nagoya University")
+    icon_image = pygame.image.load("assets/images/Fredy_attack.png")
+
+    pygame.display.set_icon(icon_image)
 
     clock = pygame.time.Clock()
     

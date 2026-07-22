@@ -11,11 +11,12 @@ class TitleScene(BaseScene):
         
         # フォントの設定
         self.font_title = pygame.font.Font(None, 100)
-        self.font_button = pygame.font.Font(None, 60)
+        self.font_button = pygame.font.Font(None, 50)
         
         # ★ボタンの当たり判定(Rect)を画面中央に設定
-        self.play_button = pygame.Rect(300, 300, 200, 60)
-        self.quit_button = pygame.Rect(300, 400, 200, 60)
+        self.play_button = pygame.Rect(225, 330, 350, 40)
+        self.how_to_button = pygame.Rect(225, 390, 350, 40) # 追加
+        self.quit_button = pygame.Rect(225, 450, 350, 40)
 
         self.bg_image = pygame.image.load("assets/images/title.png").convert()
             # 画面サイズ(例：800x600)に合わせて拡大縮小
@@ -35,6 +36,9 @@ class TitleScene(BaseScene):
                 # PLAYボタンが押されたらゲーム本編(GameScene)へシーンを切り替える
                 pygame.mixer.music.stop()
                 self.manager.change_scene(LevelSelectScene(self.manager))
+            elif self.how_to_button.collidepoint(event.pos):
+                from src.scenes.howtoplay_scene import HowToPlayScene
+                self.manager.change_scene(HowToPlayScene(self.manager))
             elif self.quit_button.collidepoint(event.pos):
                 # QUITボタンが押されたらゲームを終了する
                 pygame.mixer.music.stop()
@@ -63,6 +67,14 @@ class TitleScene(BaseScene):
         play_text = self.font_button.render("PLAY", True, (255, 255, 255))
         play_rect = play_text.get_rect(center=self.play_button.center)
         screen.blit(play_text, play_rect)
+
+        # HOW TO PLAYボタン
+        howto_color = (100, 100, 100) if self.how_to_button.collidepoint(mouse_pos) else (50, 50, 50)
+        pygame.draw.rect(screen, howto_color, self.how_to_button)
+        pygame.draw.rect(screen, (255, 255, 255), self.how_to_button, 2) 
+        howto_text = self.font_button.render("HOW TO PLAY", True, (255, 255, 255))
+        howto_rect = howto_text.get_rect(center=self.how_to_button.center)
+        screen.blit(howto_text, howto_rect)
 
         # 3. QUITボタンの描画
         quit_color = (100, 100, 100) if self.quit_button.collidepoint(mouse_pos) else (50, 50, 50)
