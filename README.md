@@ -1,5 +1,5 @@
 # Five Nights at Nagoya University
-
+![alt text](image.png)
 ## 概要
 名大キャンパスを舞台に、迫りくる敵から朝の6時まで生き延びる FNaF（Five Nights at Freddy's）風ホラーゲームです。プレイヤーは警備員として、限られた電力をやりくりしながら、監視カメラやセキュリティドアを駆使して敵の侵入を防ぎます。
 
