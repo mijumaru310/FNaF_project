@@ -26,7 +26,6 @@ class HowToPlayScene(BaseScene):
             "  * Click the bottom-right map to switch cameras.",
             "[A] / [D] or Click UI:: Close Left / Right Door",
             "[Q] / [E] or Click UI: Turn on Left / Right Light",
-            "",
             "WARNING: Using doors, lights, and cameras consumes POWER.",
             "If POWER reaches 0%, the system will shut down..."
         ]
